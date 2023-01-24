@@ -8,6 +8,7 @@
     "build": "npm run clean && npm run update:lib && tsc",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node dist/index",
+    "dev": "ts-node src/index.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "update:lib": "npm install @infinityxyz/lib@latest",
     "pre:push": "npm run lint && npm run format && npm run build"
@@ -24,10 +25,11 @@
   "homepage": "https://github.com/mavriklabs/sales-liquidity-collector#readme",
   "dependencies": {
     "@infinityxyz/lib": "^1.285.0",
-    "@reservoir0x/reservoir-sdk": "^0.3.4",
+    "alchemy-sdk": "^2.3.1",
     "axios": "0.26.1",
     "bignumber.js": "9.0.2",
     "cross-env": "^7.0.3",
+    "dotenv": "^16.0.3",
     "ethers": "^5.7.2",
     "firebase-admin": "^11.5.0"
   },
