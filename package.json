@@ -9,6 +9,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node dist/index",
     "dev": "npm run migrate up && ts-node src/index.ts",
+    "start:dev": "ts-node src/index.ts",
     "migrate": "node ./node_modules/node-pg-migrate/bin/node-pg-migrate -m ./src/migrations --no-check-order",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "update:lib": "npm install @infinityxyz/lib@latest",

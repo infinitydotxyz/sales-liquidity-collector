@@ -5,8 +5,8 @@ import axios from 'axios';
 import * as dotenv from 'dotenv';
 import { ethers } from 'ethers';
 import firebaseAdmin, { ServiceAccount } from 'firebase-admin';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import path, { resolve } from 'path';
 import pgPromise from 'pg-promise';
 import { AlchemyNftSaleResponse, AlchemyNftSalesQueryParams, FlattenedPostgresNFTSale } from 'types';
 dotenv.config();
@@ -18,33 +18,48 @@ firebaseAdmin.initializeApp({
 });
 const firestore = firebaseAdmin.firestore();
 
-const pgConnection = {
-  connectionString: process.env.DATABASE_URL,
-  // host: process.env.PG_HOST_LOCAL,
-  // port: Number(process.env.PG_PORT),
-  // database: process.env.PG_DB_NAME,
-  // user: process.env.PG_USER,
-  // password: process.env.PG_PASS,
-  max: 20,
-  idleTimeoutMillis: 10000,
-  connectionTimeoutMillis: 2000
-};
+let pgConnection: any = { max: 20, idleTimeoutMillis: 10000, connectionTimeoutMillis: 2000 };
+const connectionString = process.env.DATABASE_URL;
+if (connectionString) {
+  pgConnection = {
+    connectionString,
+    ...pgConnection
+  };
+} else {
+  pgConnection = {
+    host: process.env.PG_HOST_LOCAL,
+    port: Number(process.env.PG_PORT),
+    database: process.env.PG_DB_NAME,
+    user: process.env.PG_USER,
+    password: process.env.PG_PASS,
+    ...pgConnection
+  };
+}
+
 const pgp = pgPromise({
   capSQL: true
 });
 const pgpDB = pgp(pgConnection);
 
 // const BLOCK_30D_AGO = '16266604';
-//const BLOCK_CURRENT = '16485264';
+const BLOCK_CURRENT = '16485264';
 const BLOCK_30D_AGO = '16485000';
-const BLOCK_CURRENT = 'latest';
+//const BLOCK_CURRENT = 'latest';
 
 const CHAIN_ID = ChainId.Mainnet;
 
+const CHECK_POINT_FILE = path.join(__dirname, 'checkpoint.txt');
+
 export const fetchAllEthNFTSalesFromAlchemy = async (loop = false) => {
   try {
+    let lastBlock = '';
+    if (existsSync(CHECK_POINT_FILE)) {
+      lastBlock = readFileSync(CHECK_POINT_FILE, 'utf8');
+      console.log('Checkpoint found. Resuming from block:', lastBlock);
+    }
+
     const params: AlchemyNftSalesQueryParams = {
-      fromBlock: BLOCK_30D_AGO,
+      fromBlock: lastBlock || BLOCK_30D_AGO, // ?? doesn't work
       toBlock: BLOCK_CURRENT,
       order: 'asc',
       limit: '10'
@@ -64,6 +79,10 @@ export const fetchAllEthNFTSalesFromAlchemy = async (loop = false) => {
     let pgData = await getPostgresData(firstData.nftSales);
     await batchSaveToPostgres(pgData);
 
+    lastBlock = firstData.nftSales[firstData.nftSales.length - 1].blockNumber;
+    writeFileSync(CHECK_POINT_FILE, `${lastBlock}`);
+    console.log('Saved checkpoint at block:', lastBlock);
+
     // loop and fetch all pages
     params.pageKey = pageKey;
     params.limit = '1000'; // max limit is 1000
@@ -74,6 +93,10 @@ export const fetchAllEthNFTSalesFromAlchemy = async (loop = false) => {
       pageKey = data.pageKey;
       pgData = await getPostgresData(data.nftSales);
       await batchSaveToPostgres(pgData);
+
+      lastBlock = firstData.nftSales[firstData.nftSales.length - 1].blockNumber;
+      writeFileSync(CHECK_POINT_FILE, `${lastBlock}`);
+      console.log('Saved checkpoint at block:', lastBlock);
     }
   } catch (error) {
     console.error(error);
