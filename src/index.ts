@@ -18,11 +18,12 @@ firebaseAdmin.initializeApp({
 const firestore = firebaseAdmin.firestore();
 
 const pool = new Pool({
-  host: process.env.PG_HOST_LOCAL,
-  port: Number(process.env.PG_PORT),
-  database: process.env.PG_DB_NAME,
-  user: process.env.PG_USER,
-  password: process.env.PG_PASS,
+  connectionString: process.env.DATABASE_URL,
+  // host: process.env.PG_HOST_LOCAL,
+  // port: Number(process.env.PG_PORT),
+  // database: process.env.PG_DB_NAME,
+  // user: process.env.PG_USER,
+  // password: process.env.PG_PASS,
   max: 20,
   idleTimeoutMillis: 10000,
   connectionTimeoutMillis: 2000
