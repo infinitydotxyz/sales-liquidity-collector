@@ -1,21 +1,21 @@
 export interface FlattenedPostgresNFTSale {
-  txnHash: string;
-  blockNumber: number;
+  txhash: string;
+  block_number: number;
   marketplace: string;
-  marketplaceAddress: string;
+  marketplace_address: string;
   seller: string;
   buyer: string;
   quantity: string;
-  collectionAddress: string;
-  collectionName: string;
-  tokenId: string;
-  tokenImage: string;
-  timestamp: number;
-  salePrice: string;
-  salePriceEth: number;
-  saleCurrencyAddress: string;
-  saleCurrencyDecimals: number;
-  saleCurrencySymbol: string;
+  collection_address: string;
+  collection_name: string;
+  token_id: string;
+  token_image: string;
+  sale_timestamp: number;
+  sale_price: string;
+  sale_price_eth: number;
+  sale_currency_address: string;
+  sale_currency_decimals: number;
+  sale_currency_symbol: string;
 }
 
 export interface AlchemyNftSaleResponse {
