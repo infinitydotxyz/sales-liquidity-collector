@@ -170,10 +170,6 @@ const saveToPostgres = async (data: FlattenedPostgresNFTSale[]) => {
       const valuesString = values.map((_, i) => `$${i + 1}`).join(',');
       const insert = `INSERT INTO ${table} (${colNames}) VALUES (${valuesString}) ON CONFLICT DO NOTHING`;
       await client.query(insert, values);
-
-      // const insert = `INSERT INTO ${table} (txhash, sale_timestamp) VALUES ($1, $2) ON CONFLICT DO NOTHING`;
-      // const insertValues = [sale.txhash, sale.sale_timestamp];
-      // await client.query(insert, insertValues);
     }
 
     const res = await client.query(`SELECT * FROM ${table}`);
