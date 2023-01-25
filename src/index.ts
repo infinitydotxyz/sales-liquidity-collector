@@ -34,7 +34,6 @@ const pgp = pgPromise({
 const pgpDB = pgp(pgConnection);
 
 // const BLOCK_30D_AGO = '16266604';
-// const BLOCK_30D_AGO = '16485000';
 //const BLOCK_CURRENT = '16485264';
 const BLOCK_30D_AGO = '16485000';
 const BLOCK_CURRENT = 'latest';
@@ -46,8 +45,8 @@ export const fetchAllEthNFTSalesFromAlchemy = async (loop = false) => {
     const params: AlchemyNftSalesQueryParams = {
       fromBlock: BLOCK_30D_AGO,
       toBlock: BLOCK_CURRENT,
-      order: 'desc',
-      limit: '1'
+      order: 'asc',
+      limit: '10'
     };
 
     const options = {
@@ -90,6 +89,31 @@ const getPostgresData = async (data: AlchemyNftSaleResponse[]): Promise<Flattene
   const divisor = last.blockNumber === first.blockNumber ? 1 : last.blockNumber - first.blockNumber;
   const avgBlockTime = (lastTimestamp - firstTimestamp) / divisor;
 
+  const fsRefs = data.map((sale) => {
+    const collectionDocId = getCollectionDocId({
+      collectionAddress: sale.contractAddress,
+      chainId: CHAIN_ID
+    });
+
+    return firestore
+      .collection(firestoreConstants.COLLECTIONS_COLL)
+      .doc(collectionDocId)
+      .collection(firestoreConstants.COLLECTION_NFTS_COLL)
+      .doc(sale.tokenId);
+  });
+
+  const fsData = await firestore.getAll(...fsRefs);
+  
+  const fsTokenDataMap = new Map<string, NftDto>();
+  fsData.forEach((doc) => {
+    const fsTokenData = doc.data() as NftDto;
+    // this check is reqd in cases where the collection is not indexed yet
+    if (fsTokenData && fsTokenData.collectionAddress && fsTokenData.tokenId) {
+      const fsTokenDataKey = `${fsTokenData.collectionAddress}:${fsTokenData.tokenId}`;
+      fsTokenDataMap.set(fsTokenDataKey, fsTokenData);
+    }
+  });
+
   for (const sale of data) {
     // don't want to read an entire block for every sale just to call block.timestamp on it hence using extrapolated timestamp
     // this method is not 100% accurate but it's close enough for our purposes and exponentially faster
@@ -104,7 +128,7 @@ const getPostgresData = async (data: AlchemyNftSaleResponse[]): Promise<Flattene
       firstTimestamp
     );
 
-    const fsTokenData = await firestoreTokenData(sale.contractAddress, sale.tokenId);
+    const fsTokenData = fsTokenDataMap.get(`${sale.contractAddress}:${sale.tokenId}`);
     const tokenImage =
       fsTokenData?.image?.url ?? fsTokenData?.alchemyCachedImage ?? fsTokenData?.image?.originalUrl ?? '';
     const collectionName = fsTokenData?.collectionName ?? '';
@@ -150,21 +174,6 @@ const getExtrapolatedUnixTimestamp = (
 ) => {
   const extrapolatedTimestamp = Math.round((blockNumber - firstBlockNumber) * avgBlockTime + firstBlockTimestamp);
   return extrapolatedTimestamp;
-};
-
-const firestoreTokenData = async (collectionAddress: string, tokenId: string): Promise<NftDto> => {
-  const collectionDocId = getCollectionDocId({
-    collectionAddress,
-    chainId: CHAIN_ID
-  });
-  const data = await firestore
-    .collection(firestoreConstants.COLLECTIONS_COLL)
-    .doc(collectionDocId)
-    .collection(firestoreConstants.COLLECTION_NFTS_COLL)
-    .doc(tokenId)
-    .get();
-
-  return data.data() as NftDto;
 };
 
 const batchSaveToPostgres = async (data: FlattenedPostgresNFTSale[]) => {
