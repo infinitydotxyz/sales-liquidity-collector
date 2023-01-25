@@ -1,14 +1,15 @@
-import * as dotenv from 'dotenv';
-dotenv.config();
-import axios from 'axios';
-import { FlattenedPostgresNFTSale, AlchemyNftSaleResponse, AlchemyNftSalesQueryParams } from 'types';
-import { ethers } from 'ethers';
-import { firestoreConstants, getCollectionDocId } from '@infinityxyz/lib/utils';
-import firebaseAdmin, { ServiceAccount } from 'firebase-admin';
-import { resolve } from 'path';
-import { readFileSync } from 'fs';
+import { ChainId } from '@infinityxyz/lib/types/core';
 import { NftDto } from '@infinityxyz/lib/types/dto';
-import { Pool } from 'pg';
+import { firestoreConstants, getCollectionDocId } from '@infinityxyz/lib/utils';
+import axios from 'axios';
+import * as dotenv from 'dotenv';
+import { ethers } from 'ethers';
+import firebaseAdmin, { ServiceAccount } from 'firebase-admin';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+import pgPromise from 'pg-promise';
+import { AlchemyNftSaleResponse, AlchemyNftSalesQueryParams, FlattenedPostgresNFTSale } from 'types';
+dotenv.config();
 
 const serviceAccountFile = resolve(__dirname, `creds/firebase-prod.json`);
 const serviceAccount = JSON.parse(readFileSync(serviceAccountFile, 'utf-8'));
@@ -17,7 +18,7 @@ firebaseAdmin.initializeApp({
 });
 const firestore = firebaseAdmin.firestore();
 
-const pool = new Pool({
+const pgConnection = {
   host: process.env.PG_HOST_LOCAL,
   port: Number(process.env.PG_PORT),
   database: process.env.PG_DB_NAME,
@@ -26,17 +27,27 @@ const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 10000,
   connectionTimeoutMillis: 2000
+};
+const pgp = pgPromise({
+  capSQL: true
 });
+const pgpDB = pgp(pgConnection);
 
-const BLOCK_30D_AGO = '16266604';
+// const BLOCK_30D_AGO = '16266604';
+// const BLOCK_30D_AGO = '16485000';
+//const BLOCK_CURRENT = '16485264';
+const BLOCK_30D_AGO = '16485000';
+const BLOCK_CURRENT = 'latest';
 
-export const fetchAllNFTSalesFromAlchemy = async (loop = false) => {
+const CHAIN_ID = ChainId.Mainnet;
+
+export const fetchAllEthNFTSalesFromAlchemy = async (loop = false) => {
   try {
     const params: AlchemyNftSalesQueryParams = {
       fromBlock: BLOCK_30D_AGO,
-      toBlock: 'latest',
+      toBlock: BLOCK_CURRENT,
       order: 'desc',
-      limit: '2'
+      limit: '1'
     };
 
     const options = {
@@ -51,7 +62,7 @@ export const fetchAllNFTSalesFromAlchemy = async (loop = false) => {
     const firstData = firstResult.data;
     let pageKey = firstData.pageKey;
     let pgData = await getPostgresData(firstData.nftSales);
-    await saveToPostgres(pgData);
+    await batchSaveToPostgres(pgData);
 
     // loop and fetch all pages
     params.pageKey = pageKey;
@@ -62,6 +73,7 @@ export const fetchAllNFTSalesFromAlchemy = async (loop = false) => {
       const data = result.data;
       pageKey = data.pageKey;
       pgData = await getPostgresData(data.nftSales);
+      await batchSaveToPostgres(pgData);
     }
   } catch (error) {
     console.error(error);
@@ -143,7 +155,7 @@ const getExtrapolatedUnixTimestamp = (
 const firestoreTokenData = async (collectionAddress: string, tokenId: string): Promise<NftDto> => {
   const collectionDocId = getCollectionDocId({
     collectionAddress,
-    chainId: '1'
+    chainId: CHAIN_ID
   });
   const data = await firestore
     .collection(firestoreConstants.COLLECTIONS_COLL)
@@ -155,31 +167,16 @@ const firestoreTokenData = async (collectionAddress: string, tokenId: string): P
   return data.data() as NftDto;
 };
 
-const saveToPostgres = async (data: FlattenedPostgresNFTSale[]) => {
-  const client = await pool.connect();
-  const table = 'eth_nft_sales';
+const batchSaveToPostgres = async (data: FlattenedPostgresNFTSale[]) => {
   try {
-    for (const sale of data) {
-      const keys = [];
-      const values = [];
-      for (const [key, value] of Object.entries(sale)) {
-        keys.push(key);
-        values.push(value);
-      }
-      const colNames = keys.join(',');
-      const valuesString = values.map((_, i) => `$${i + 1}`).join(',');
-      const insert = `INSERT INTO ${table} (${colNames}) VALUES (${valuesString}) ON CONFLICT DO NOTHING`;
-      await client.query(insert, values);
-    }
-
-    const res = await client.query(`SELECT * FROM ${table}`);
-    console.log(res.rows[0]);
+    const table = 'eth_nft_sales';
+    const columnSet = new pgp.helpers.ColumnSet(Object.keys(data[0]), { table });
+    const query = pgp.helpers.insert(data, columnSet);
+    await pgpDB.none(query);
   } catch (err) {
     console.error(err);
-  } finally {
-    client.release();
   }
 };
 
 // run
-fetchAllNFTSalesFromAlchemy(false).catch(console.error);
+fetchAllEthNFTSalesFromAlchemy(false).catch(console.error);

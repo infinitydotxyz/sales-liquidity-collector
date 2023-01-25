@@ -31,7 +31,8 @@
     "dotenv": "^16.0.3",
     "ethers": "^5.7.2",
     "firebase-admin": "^11.5.0",
-    "pg": "^8.8.0"
+    "pg": "^8.8.0",
+    "pg-promise": "^11.0.2"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
