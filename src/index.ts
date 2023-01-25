@@ -41,9 +41,8 @@ const pgp = pgPromise({
 });
 const pgpDB = pgp(pgConnection);
 
-// const BLOCK_30D_AGO = '16266604';
+const BLOCK_30D_AGO = '16266604';
 const BLOCK_CURRENT = '16485264';
-const BLOCK_30D_AGO = '16485000';
 //const BLOCK_CURRENT = 'latest';
 
 const CHAIN_ID = ChainId.Mainnet;
@@ -55,7 +54,7 @@ export const fetchAllEthNFTSalesFromAlchemy = async (loop = false) => {
     let lastBlock = '';
     if (existsSync(CHECK_POINT_FILE)) {
       lastBlock = readFileSync(CHECK_POINT_FILE, 'utf8');
-      console.log('Checkpoint found. Resuming from block:', lastBlock);
+      lastBlock && console.log('Checkpoint found. Resuming from block:', lastBlock);
     }
 
     const params: AlchemyNftSalesQueryParams = {
@@ -84,17 +83,19 @@ export const fetchAllEthNFTSalesFromAlchemy = async (loop = false) => {
     console.log('Saved checkpoint at block:', lastBlock);
 
     // loop and fetch all pages
-    params.pageKey = pageKey;
     params.limit = '1000'; // max limit is 1000
-    options.params = params;
     while (loop && pageKey) {
+      console.log('Fetching page:', pageKey);
+      params.pageKey = pageKey;
+      options.params = params;
       const result = await axios.request(options);
       const data = result.data;
-      pageKey = data.pageKey;
       pgData = await getPostgresData(data.nftSales);
       await batchSaveToPostgres(pgData);
 
-      lastBlock = firstData.nftSales[firstData.nftSales.length - 1].blockNumber;
+      pageKey = data.pageKey;
+
+      lastBlock = data.nftSales[data.nftSales.length - 1].blockNumber;
       writeFileSync(CHECK_POINT_FILE, `${lastBlock}`);
       console.log('Saved checkpoint at block:', lastBlock);
     }
@@ -202,7 +203,7 @@ const batchSaveToPostgres = async (data: FlattenedPostgresNFTSale[]) => {
   try {
     const table = 'eth_nft_sales';
     const columnSet = new pgp.helpers.ColumnSet(Object.keys(data[0]), { table });
-    const query = pgp.helpers.insert(data, columnSet);
+    const query = pgp.helpers.insert(data, columnSet) + ' ON CONFLICT DO NOTHING';
     await pgpDB.none(query);
   } catch (err) {
     console.error(err);
@@ -210,4 +211,4 @@ const batchSaveToPostgres = async (data: FlattenedPostgresNFTSale[]) => {
 };
 
 // run
-fetchAllEthNFTSalesFromAlchemy(false).catch(console.error);
+fetchAllEthNFTSalesFromAlchemy(true).catch(console.error);
