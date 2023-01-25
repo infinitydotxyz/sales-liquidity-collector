@@ -98,23 +98,23 @@ const getPostgresData = async (data: AlchemyNftSaleResponse[]): Promise<Flattene
     const collectionName = fsTokenData?.collectionName ?? '';
 
     const pgSale: FlattenedPostgresNFTSale = {
-      txnHash: sale.transactionHash,
-      blockNumber: sale.blockNumber,
+      txhash: sale.transactionHash,
+      block_number: sale.blockNumber,
       marketplace: sale.marketplace,
-      marketplaceAddress: sale.marketplaceAddress,
+      marketplace_address: sale.marketplaceAddress,
       seller: sale.sellerAddress,
       buyer: sale.buyerAddress,
       quantity: sale.quantity,
-      collectionAddress: sale.contractAddress,
-      collectionName,
-      tokenId: sale.tokenId,
-      tokenImage,
-      timestamp: extrapolatedTimestamp,
-      salePrice: sale.sellerFee.amount,
-      salePriceEth: parseFloat(ethers.utils.formatUnits(sale.sellerFee.amount, sale.sellerFee.decimals)),
-      saleCurrencyAddress: sale.sellerFee.tokenAddress,
-      saleCurrencyDecimals: sale.sellerFee.decimals,
-      saleCurrencySymbol: sale.sellerFee.symbol
+      collection_address: sale.contractAddress,
+      collection_name: collectionName,
+      token_id: sale.tokenId,
+      token_image: tokenImage,
+      sale_timestamp: extrapolatedTimestamp,
+      sale_price: sale.sellerFee.amount,
+      sale_price_eth: parseFloat(ethers.utils.formatUnits(sale.sellerFee.amount, sale.sellerFee.decimals)),
+      sale_currency_address: sale.sellerFee.tokenAddress,
+      sale_currency_decimals: sale.sellerFee.decimals,
+      sale_currency_symbol: sale.sellerFee.symbol
     };
 
     pgData.push(pgSale);
@@ -157,7 +157,7 @@ const firestoreTokenData = async (collectionAddress: string, tokenId: string): P
 
 const saveToPostgres = async (data: FlattenedPostgresNFTSale[]) => {
   const client = await pool.connect();
-  const table = '"eth-nft-sales"';
+  const table = 'eth_nft_sales';
   try {
     for (const sale of data) {
       const keys = [];
@@ -167,11 +167,13 @@ const saveToPostgres = async (data: FlattenedPostgresNFTSale[]) => {
         values.push(value);
       }
       const colNames = keys.join(',');
-      const colValues = values.join(',');
-      // const insert = `INSERT INTO ${table} (${colNames}) VALUES (${colValues}) ON CONFLICT DO NOTHING`;
-      const insert = `INSERT INTO ${table} ("txnHash", timestamp) VALUES ($1, $2) ON CONFLICT DO NOTHING`;
-      const insertValues = [sale.txnHash, sale.timestamp];
-      await client.query(insert, insertValues);
+      const valuesString = values.map((_, i) => `$${i + 1}`).join(',');
+      const insert = `INSERT INTO ${table} (${colNames}) VALUES (${valuesString}) ON CONFLICT DO NOTHING`;
+      await client.query(insert, values);
+
+      // const insert = `INSERT INTO ${table} (txhash, sale_timestamp) VALUES ($1, $2) ON CONFLICT DO NOTHING`;
+      // const insertValues = [sale.txhash, sale.sale_timestamp];
+      // await client.query(insert, insertValues);
     }
 
     const res = await client.query(`SELECT * FROM ${table}`);
