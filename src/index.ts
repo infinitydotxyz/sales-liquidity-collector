@@ -103,7 +103,7 @@ const getPostgresData = async (data: AlchemyNftSaleResponse[]): Promise<Flattene
   });
 
   const fsData = await firestore.getAll(...fsRefs);
-  
+
   const fsTokenDataMap = new Map<string, NftDto>();
   fsData.forEach((doc) => {
     const fsTokenData = doc.data() as NftDto;
@@ -118,8 +118,6 @@ const getPostgresData = async (data: AlchemyNftSaleResponse[]): Promise<Flattene
     // don't want to read an entire block for every sale just to call block.timestamp on it hence using extrapolated timestamp
     // this method is not 100% accurate but it's close enough for our purposes and exponentially faster
     // we could make the block.timestamp calls in parallel but that feels like overkill and also costs 16 CUs per call
-
-    // const timestamp = await getUnixTimestamp(sale.blockNumber);
 
     const extrapolatedTimestamp = getExtrapolatedUnixTimestamp(
       sale.blockNumber,
