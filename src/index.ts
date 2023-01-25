@@ -158,6 +158,8 @@ const getPostgresData = async (data: AlchemyNftSaleResponse[]): Promise<Flattene
 
     const pgSale: FlattenedPostgresNFTSale = {
       txhash: sale.transactionHash,
+      log_index: sale.logIndex,
+      bundle_index: sale.bundleIndex,
       block_number: sale.blockNumber,
       marketplace: sale.marketplace,
       marketplace_address: sale.marketplaceAddress,
@@ -211,4 +213,4 @@ const batchSaveToPostgres = async (data: FlattenedPostgresNFTSale[]) => {
 };
 
 // run
-fetchAllEthNFTSalesFromAlchemy(true).catch(console.error);
+fetchAllEthNFTSalesFromAlchemy(false).catch(console.error);

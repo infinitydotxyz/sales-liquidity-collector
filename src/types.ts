@@ -1,5 +1,7 @@
 export interface FlattenedPostgresNFTSale {
   txhash: string;
+  log_index: number;
+  bundle_index: number;
   block_number: number;
   marketplace: string;
   marketplace_address: string;
