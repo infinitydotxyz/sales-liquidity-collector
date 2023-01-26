@@ -41,9 +41,8 @@ const pgp = pgPromise({
 });
 const pgpDB = pgp(pgConnection);
 
-const BLOCK_30D_AGO = '16266604';
-const BLOCK_CURRENT = '16485264';
-//const BLOCK_CURRENT = 'latest';
+const BLOCK_FROM = '16485264';
+const BLOCK_TO = '16485264';
 
 const CHAIN_ID = ChainId.Mainnet;
 
@@ -58,8 +57,8 @@ export const fetchAllEthNFTSalesFromAlchemy = async (loop = false) => {
     }
 
     const params: AlchemyNftSalesQueryParams = {
-      fromBlock: lastBlock || BLOCK_30D_AGO, // ?? doesn't work
-      toBlock: BLOCK_CURRENT,
+      fromBlock: lastBlock || BLOCK_FROM, // ?? doesn't work
+      toBlock: BLOCK_TO,
       order: 'asc',
       limit: '10'
     };
@@ -114,18 +113,30 @@ const getPostgresData = async (data: AlchemyNftSaleResponse[]): Promise<Flattene
   const divisor = last.blockNumber === first.blockNumber ? 1 : last.blockNumber - first.blockNumber;
   const avgBlockTime = (lastTimestamp - firstTimestamp) / divisor;
 
-  const fsRefs = data.map((sale) => {
-    const collectionDocId = getCollectionDocId({
-      collectionAddress: sale.contractAddress,
-      chainId: CHAIN_ID
-    });
+  const fsRefs = [];
+  for (const sale of data) {
+    let collectionDocId;
+    try {
+      collectionDocId = getCollectionDocId({
+        collectionAddress: sale.contractAddress,
+        chainId: CHAIN_ID
+      });
+    } catch (error) {
+      console.error(error);
+      console.error('Error getting collection doc id for sale with contract address', sale.contractAddress);
+    }
 
-    return firestore
-      .collection(firestoreConstants.COLLECTIONS_COLL)
-      .doc(collectionDocId)
-      .collection(firestoreConstants.COLLECTION_NFTS_COLL)
-      .doc(sale.tokenId);
-  });
+    if (collectionDocId) {
+      fsRefs.push(
+        firestore
+          .collection(firestoreConstants.COLLECTIONS_COLL)
+          .doc(collectionDocId)
+          .collection(firestoreConstants.COLLECTION_NFTS_COLL)
+          .doc(sale.tokenId)
+      );
+    }
+  }
+
 
   const fsData = await firestore.getAll(...fsRefs);
 
@@ -213,4 +224,4 @@ const batchSaveToPostgres = async (data: FlattenedPostgresNFTSale[]) => {
 };
 
 // run
-fetchAllEthNFTSalesFromAlchemy(false).catch(console.error);
+fetchAllEthNFTSalesFromAlchemy(true).catch(console.error);
