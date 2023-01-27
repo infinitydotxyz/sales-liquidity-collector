@@ -222,6 +222,3 @@ const batchSaveToPostgres = async (data: FlattenedPostgresNFTSale[]) => {
     console.error(err);
   }
 };
-
-// run
-fetchAllEthNFTSalesFromAlchemy(true).catch(console.error);
