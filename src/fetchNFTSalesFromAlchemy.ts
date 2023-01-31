@@ -18,7 +18,7 @@ firebaseAdmin.initializeApp({
 });
 const firestore = firebaseAdmin.firestore();
 
-let pgConnection: any = { max: 20, idleTimeoutMillis: 10000, connectionTimeoutMillis: 2000 };
+let pgConnection: any = { max: 20, idleTimeoutMillis: 10000, connectionTimeoutMillis: 20000 };
 const connectionString = process.env.DATABASE_URL;
 if (connectionString) {
   pgConnection = {
@@ -42,7 +42,7 @@ const pgp = pgPromise({
 const pgpDB = pgp(pgConnection);
 
 const BLOCK_FROM = '16485264';
-const BLOCK_TO = '16485264';
+const BLOCK_TO = '16528000';
 
 const CHAIN_ID = ChainId.Mainnet;
 

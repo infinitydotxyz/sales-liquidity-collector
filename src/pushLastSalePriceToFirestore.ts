@@ -43,7 +43,7 @@ const CHAIN_ID = ChainId.Mainnet;
 export const pushLastSalePriceToFs = () => {
   const query =
     'SELECT collection_address, token_id, sale_price_eth, sale_timestamp, block_number FROM eth_nft_sales \
-       WHERE block_number >= 16494414 AND block_number <= 16500000 ORDER BY block_number ASC LIMIT 10000000';
+       WHERE block_number >= 16485264 AND block_number <= 16528000 ORDER BY block_number ASC LIMIT 10000000';
 
   pool.connect((err, client, done) => {
     if (err) {
@@ -72,6 +72,10 @@ export const pushLastSalePriceToFs = () => {
       const tokenId = row.token_id;
       const salePriceEth = parseFloat(row.sale_price_eth);
       const saleTimestamp = Number(row.sale_timestamp);
+
+      if (!salePriceEth || !saleTimestamp) {
+        return;
+      }   
       
       let collectionDocId;
       try {
