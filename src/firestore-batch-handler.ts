@@ -50,9 +50,7 @@ export default class FirestoreBatchHandler {
         attempt += 1;
         try {
           await batch.commit();
-          console.log(
-            `================================== Committed firestore batch ================================`
-          );
+          console.log(`================================== Committed firestore batch ================================`);
           return;
         } catch (err) {
           // logger.error('Failed to commit batch', err);

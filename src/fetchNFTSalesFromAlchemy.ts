@@ -137,7 +137,6 @@ const getPostgresData = async (data: AlchemyNftSaleResponse[]): Promise<Flattene
     }
   }
 
-
   const fsData = await firestore.getAll(...fsRefs);
 
   const fsTokenDataMap = new Map<string, NftDto>();
