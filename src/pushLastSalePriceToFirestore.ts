@@ -75,8 +75,8 @@ export const pushLastSalePriceToFs = () => {
 
       if (!salePriceEth || !saleTimestamp) {
         return;
-      }   
-      
+      }
+
       let collectionDocId;
       try {
         collectionDocId = getCollectionDocId({ collectionAddress, chainId: CHAIN_ID });

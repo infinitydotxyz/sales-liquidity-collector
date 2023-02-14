@@ -17,13 +17,15 @@ CREATE TABLE "eth_nft_sales" (
     "sale_currency_address" TEXT COLLATE pg_catalog."default",
     "sale_currency_decimals" NUMERIC,
     "sale_currency_symbol" TEXT COLLATE pg_catalog."default",
-    "sale_price_eth" NUMERIC
+    "sale_price_eth" NUMERIC,
+    "log_index" NUMERIC,
+    "bundle_index" NUMERIC
 );
 
 ALTER TABLE "eth_nft_sales"
   ADD CONSTRAINT "eth_nft_sales_pkey"
-  PRIMARY KEY ("txhash");
-
+  PRIMARY KEY ("txhash", "log_index", "bundle_index");
+  
 -- Down Migration
 
 DROP TABLE "eth-nft-sales";
