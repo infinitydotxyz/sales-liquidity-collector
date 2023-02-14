@@ -18,7 +18,7 @@ firebaseAdmin.initializeApp({
 const firestore = firebaseAdmin.firestore();
 const fsBatchHandler = new FirestoreBatchHandler(firestore);
 
-let pgConnection: any = { max: 20, idleTimeoutMillis: 10000, connectionTimeoutMillis: 2000 };
+let pgConnection: any = { max: 20, idleTimeoutMillis: 10000, connectionTimeoutMillis: 20000 };
 const connectionString = process.env.DATABASE_URL;
 if (connectionString) {
   pgConnection = {
