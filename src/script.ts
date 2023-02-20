@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { updateSaleAndOrderImagesInPostgres } from './updateSaleAndOrderImagesInPostgres';
 import { deleteNonSupportedCollLiquidity } from './deleteNonSupportedCollLiquidity';
 import { fetchAllEthNFTSalesFromAlchemy } from './fetchNFTSalesFromAlchemy';
 import { pushLastSalePriceToFs } from './pushLastSalePriceToFirestore';
@@ -9,6 +10,7 @@ export async function main(): Promise<void> {
     // await deleteNonSupportedCollLiquidity();
     // pushLastSalePriceToFs();
     // await fetchAllEthNFTSalesFromAlchemy(true);
+    // await updateSaleAndOrderImagesInPostgres('0x1cb1a5e65610aeff2551a50f76a87a7d3fb649c6');
   } catch (err) {
     console.error(err);
   }
