@@ -26,7 +26,8 @@
   },
   "homepage": "https://github.com/mavriklabs/sales-liquidity-collector#readme",
   "dependencies": {
-    "@infinityxyz/lib": "^1.323.0",
+    "@infinityxyz/lib": "^1.333.2",
+    "@reservoir0x/sdk": "^0.0.324",
     "axios": "^1.2.4",
     "bignumber.js": "9.0.2",
     "cross-env": "^7.0.3",

@@ -20,6 +20,53 @@ export interface FlattenedPostgresNFTSale {
   sale_currency_symbol: string;
 }
 
+export interface ReservoirSale {
+  id: string;
+  saleId: string;
+  token: {
+    contract: string;
+    tokenId: string;
+    image: string;
+    collection:{
+      name: string;
+      id: string;
+    }
+  };
+  orderId: string;
+  orderSource: string;
+  orderSide: string;
+  orderKind: string;
+  from: string;
+  to: string;
+  amount: string;
+  fillSource: string;
+  block: number;
+  txHash: string;
+  logIndex: number;
+  batchIndex: number;
+  timestamp: number; // in seconds since Unix epoch
+  price: {
+    currency: {
+      contract: string;
+      name: string;
+      symbol: string;
+      decimals: number;
+    };
+    amount: {
+      raw: string;
+      decimal: number;
+      usd: number | null;
+      native: number;
+    };
+    netAmount: {
+      raw: string;
+      decimal: number;
+      usd: number | null;
+      native: number;
+    };
+  };
+}
+
 export interface AlchemyNftSaleResponse {
   marketplace: string;
   marketplaceAddress: string;
