@@ -1,4 +1,4 @@
-import { ChainId, Erc721Token } from '@infinityxyz/lib/types/core';
+import { Erc721Token } from '@infinityxyz/lib/types/core';
 import { firestoreConstants, trimLowerCase } from '@infinityxyz/lib/utils';
 import * as dotenv from 'dotenv';
 import firebaseAdmin, { ServiceAccount } from 'firebase-admin';
@@ -35,9 +35,16 @@ if (connectionString) {
 
 const pool = new Pool(pgConnection);
 
-const CHAIN_ID = ChainId.Mainnet;
+export const updateSaleAndOrderImagesInPostgres = async () => {
+  if (process.argv.length !== 3) {
+    throw new Error(
+      'Invalid number of arguments. Usage is: npm run script <chainId>:<collectionAddress>'
+    );
+  }
+  const chainId = process.argv[2].split(':')[0];
+  const collectionAddress = trimLowerCase(process.argv[2].split(':')[1]);
+  console.log(`Updating sales and orders for ${chainId}:${collectionAddress}`);
 
-export const updateSaleAndOrderImagesInPostgres = async (collectionAddress: string) => {
   const salesQ = `SELECT token_id FROM eth_nft_sales \
        WHERE collection_address = '${collectionAddress}' ORDER BY sale_timestamp DESC LIMIT 3000`;
 
@@ -77,7 +84,7 @@ export const updateSaleAndOrderImagesInPostgres = async (collectionAddress: stri
   // get image url for each token id from firestore
   const tokenRefs = [];
   for (const tokenId of allTokenIds) {
-    const collectionId = `${CHAIN_ID}:${trimLowerCase(collectionAddress)}`;
+    const collectionId = `${chainId}:${trimLowerCase(collectionAddress)}`;
     const tokenRef = firestore
       .collection(firestoreConstants.COLLECTIONS_COLL)
       .doc(collectionId)
