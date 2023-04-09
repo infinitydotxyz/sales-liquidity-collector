@@ -43,6 +43,10 @@ export const updateSaleAndOrderImagesInPostgres = async () => {
   }
   const chainId = process.argv[2].split(':')[0];
   const collectionAddress = trimLowerCase(process.argv[2].split(':')[1]);
+  await updateSaleAndOrderImagesForCollId(chainId, collectionAddress);
+};
+
+export const updateSaleAndOrderImagesForCollId = async (chainId: string, collectionAddress: string) => {
   console.log(`Updating sales and orders for ${chainId}:${collectionAddress}`);
 
   const salesQ = `SELECT token_id FROM eth_nft_sales \
@@ -97,6 +101,9 @@ export const updateSaleAndOrderImagesInPostgres = async () => {
   const imageMap = new Map<string, string>();
   for (const tokenSnap of tokensSnap) {
     const tokenDoc = tokenSnap.data() as Erc721Token;
+    if (!tokenDoc) {
+      continue;
+    }
     const tokenId = tokenDoc.tokenId;
 
     const imageUrl =
@@ -119,4 +126,4 @@ export const updateSaleAndOrderImagesInPostgres = async () => {
     await pool.query(updateSalesQ);
     await pool.query(updateOrdersQ);
   }
-};
+}
