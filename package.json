@@ -17,14 +17,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mavriklabs/sales-liquidity-collector.git"
+    "url": "git+https://github.com/infinitydotxyz/sales-liquidity-collector.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/mavriklabs/sales-liquidity-collector/issues"
+    "url": "https://github.com/infinitydotxyz/sales-liquidity-collector/issues"
   },
-  "homepage": "https://github.com/mavriklabs/sales-liquidity-collector#readme",
+  "homepage": "https://github.com/infinitydotxyz/sales-liquidity-collector#readme",
   "dependencies": {
     "@infinityxyz/lib": "^1.333.2",
     "@reservoir0x/sdk": "^0.0.324",
